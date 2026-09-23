@@ -44,3 +44,38 @@ test("Render deployment rejects plaintext database connections and public metric
     Object.assign(process.env, before);
   }
 });
+
+test("production allows basic malware checks only for the explicit synthetic demo configuration", () => {
+  const before = { ...process.env };
+  try {
+    for (const name of ["DATABASE_URL", "JWT_SECRET", "FILE_SIGNING_SECRET", "METRICS_TOKEN", "DATABASE_CA_CERT", "DEMO_ENV", "MALWARE_SCAN_MODE", "REQUIRE_MALWARE_SCANNER"]) {
+      delete process.env[name];
+      delete process.env[`${name}_FILE`];
+    }
+    Object.assign(process.env, {
+      NODE_ENV: "production",
+      DATABASE_URL: "postgresql://test:test@db.example.invalid/demo?sslmode=require",
+      REQUIRE_DATABASE_TLS: "true",
+      JWT_SECRET: "j".repeat(48),
+      FILE_SIGNING_SECRET: "s".repeat(48),
+      METRICS_TOKEN: "m".repeat(48),
+      ALLOWED_ORIGINS: "https://frontend.example.invalid",
+      DEMO_ENV: "true",
+      MALWARE_SCAN_MODE: "basic",
+      REQUIRE_MALWARE_SCANNER: "false",
+    });
+    assert.doesNotThrow(validateProductionConfiguration);
+
+    process.env.DEMO_ENV = "false";
+    assert.throws(validateProductionConfiguration, /Non-demo production requires REQUIRE_MALWARE_SCANNER=true/);
+    process.env.DEMO_ENV = "true";
+    process.env.MALWARE_SCAN_MODE = "antivirus";
+    assert.throws(validateProductionConfiguration, /Non-demo production requires REQUIRE_MALWARE_SCANNER=true/);
+    process.env.MALWARE_SCAN_MODE = "basic";
+    delete process.env.REQUIRE_MALWARE_SCANNER;
+    assert.throws(validateProductionConfiguration, /Non-demo production requires REQUIRE_MALWARE_SCANNER=true/);
+  } finally {
+    for (const name of Object.keys(process.env)) if (!(name in before)) delete process.env[name];
+    Object.assign(process.env, before);
+  }
+});

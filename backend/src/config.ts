@@ -68,8 +68,11 @@ export function validateProductionConfiguration() {
   assertStrongSecret("FILE_SIGNING_SECRET", fileSigningSecret);
   assertStrongSecret("METRICS_TOKEN", metricsToken);
   if (jwtSecret === fileSigningSecret) throw new Error("JWT_SECRET and FILE_SIGNING_SECRET must be different secrets.");
-  if (process.env.REQUIRE_MALWARE_SCANNER !== "true") {
-    throw new Error("Production requires REQUIRE_MALWARE_SCANNER=true so uploads fail closed when scanning is unavailable.");
+  const demoBasicScanAllowed = process.env.DEMO_ENV === "true"
+    && process.env.MALWARE_SCAN_MODE === "basic"
+    && process.env.REQUIRE_MALWARE_SCANNER === "false";
+  if (process.env.REQUIRE_MALWARE_SCANNER !== "true" && !demoBasicScanAllowed) {
+    throw new Error("Non-demo production requires REQUIRE_MALWARE_SCANNER=true so uploads fail closed when scanning is unavailable.");
   }
   if (allowedOrigins().length === 0) {
     throw new Error("Production requires ALLOWED_ORIGINS with the public HTTPS origin.");
