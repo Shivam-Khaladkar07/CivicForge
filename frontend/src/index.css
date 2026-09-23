@@ -1,0 +1,62 @@
+@import "leaflet/dist/leaflet.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ── Warm Earthy CivicForge Theme ── */
+    --background: 40 100% 97%;           /* #FFF8EA  warm cream */
+    --foreground: 14 35% 25%;            /* #5A3025  dark earthy brown */
+    --card: 40 67% 99%;                  /* #FFFDF7  soft cream card */
+    --card-foreground: 14 35% 25%;       /* #5A3025 */
+    --primary: 15 52% 30%;              /* #743B25  primary brown */
+    --primary-foreground: 40 100% 97%;   /* cream text on primary */
+    --secondary: 93 13% 48%;             /* #7B9562  sage green */
+    --secondary-foreground: 0 0% 100%;   /* white text on secondary */
+    --muted: 38 38% 92%;                 /* #EEE4D3  warm beige */
+    --muted-foreground: 24 20% 44%;      /* #806A58  secondary text */
+    --accent: 83 30% 89%;               /* #DCE5C8  light sage */
+    --accent-foreground: 93 20% 28%;     /* dark olive */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 93 13% 40%;              /* muted olive success */
+    --success-foreground: 0 0% 100%;
+    --warning: 33 86% 54%;              /* #F08A24  orange accent */
+    --warning-foreground: 14 35% 15%;
+    --ai: 262 42% 42%;
+    --ai-foreground: 0 0% 100%;
+    --border: 33 40% 80%;               /* #E8D8BD  warm border */
+    --input: 33 40% 82%;
+    --ring: 15 52% 30%;                 /* primary brown focus ring */
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: "Inter", "Segoe UI", "Noto Sans", system-ui, sans-serif;
+    background-image:
+      radial-gradient(circle at 0% 0%,   rgb(200 120 60 / 0.07), transparent 30rem),
+      radial-gradient(circle at 100% 20%, rgb(123 149 98 / 0.08), transparent 28rem);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  .app-surface { @apply border border-[#E8D8BD]/70 bg-[#FFFDF7]/85 shadow-card backdrop-blur-sm; }
+  .hero-grid {
+    background-image: linear-gradient(rgb(232 216 189 / .45) 1px, transparent 1px), linear-gradient(90deg, rgb(232 216 189 / .45) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+}
+
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  border-radius: 0.65rem;
+  z-index: 0;
+}

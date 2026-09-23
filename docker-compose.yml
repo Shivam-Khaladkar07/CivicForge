@@ -1,0 +1,63 @@
+services:
+  api:
+    build: ./backend
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL to the CivicForge Supabase connection string in the project .env}
+      DATABASE_CA_CERT_FILE: /run/secrets/supabase-ca.crt
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      FILE_SIGNING_SECRET: ${FILE_SIGNING_SECRET:?Set FILE_SIGNING_SECRET}
+      METRICS_TOKEN: ${METRICS_TOKEN:?Set METRICS_TOKEN}
+      PRIVATE_UPLOAD_DIR: /data/uploads
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:8080}
+      ALLOW_INSECURE_ORIGINS: "true"
+      TRUST_PROXY_HOPS: 1
+      DEMO_ENV: ${DEMO_ENV:-true}
+      SEED_ON_STARTUP: "true"
+      REQUIRE_POSTGRES: "true"
+      REQUIRE_DATABASE_TLS: "true"
+      REQUIRE_MALWARE_SCANNER: ${REQUIRE_MALWARE_SCANNER:-true}
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: 3310
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_API_BASE_URL: ${AI_API_BASE_URL:-https://api.openai.com/v1}
+      AI_MODEL: ${AI_MODEL:-gpt-4o-mini}
+      AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-text-embedding-3-small}
+    depends_on:
+      clamav:
+        condition: service_started
+    volumes:
+      - civicforge_uploads:/data/uploads
+      - ${DATABASE_CA_CERT_PATH:?Set DATABASE_CA_CERT_PATH to the downloaded Supabase CA certificate}:/run/secrets/supabase-ca.crt:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/api/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  clamav:
+    image: clamav/clamav:stable
+    volumes:
+      - civicforge_clamav:/var/lib/clamav
+    healthcheck:
+      test: ["CMD-SHELL", "clamdscan --ping 2 >/dev/null 2>&1"]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+      start_period: 120s
+    restart: unless-stopped
+
+  web:
+    build: ./frontend
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+volumes:
+  civicforge_uploads:
+  civicforge_clamav:

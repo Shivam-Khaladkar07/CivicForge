@@ -1,0 +1,46 @@
+﻿# Dependencies
+node_modules/
+*/node_modules/
+
+# Build outputs
+dist/
+*/dist/
+build/
+*/build/
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+!.env.production.example
+!.env.render.example
+*.env
+backend/.env
+.secrets/
+.vercel/
+restore-drill/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+
+# Runtime data
+data/
+backend/data/
+backend/uploads/
+private-uploads/
+backend/private-uploads/
+backups/
+
+# Editor & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# TypeScript build info
+*.tsbuildinfo
+playwright-report/
+test-results/

@@ -1,0 +1,77 @@
+name: CivicForge Security
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 2 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+            frontend/package-lock.json
+      - run: npm ci
+      - run: npm ci --prefix backend
+      - run: npm ci --prefix frontend
+      - run: npm run security:audit
+
+  codeql:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@v4
+
+  zap-baseline:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      POSTGRES_PASSWORD: zap-postgres-password
+      JWT_SECRET: zap-jwt-secret-000000000000000000000000000000000000000000000000
+      FILE_SIGNING_SECRET: zap-signing-secret-000000000000000000000000000000000000000000000
+      METRICS_TOKEN: zap-metrics-token-0000000000000000000000000000000000000000000000
+      ALLOWED_ORIGINS: http://127.0.0.1:8080
+      DEMO_ENV: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start isolated scan environment
+        run: docker compose up --build --detach
+      - name: Wait for application readiness
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8080/api/health/ready >/dev/null; then exit 0; fi
+            sleep 5
+          done
+          docker compose logs
+          exit 1
+      - name: OWASP ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: http://127.0.0.1:8080
+          fail_action: false
+          allow_issue_writing: false
+          artifact_name: civicforge-zap-report
+      - name: Stop scan environment
+        if: always()
+        run: docker compose down --volumes

@@ -1,0 +1,51 @@
+groups:
+  - name: civicforge
+    rules:
+      - alert: CivicForgeApiUnavailable
+        expr: up{job="civicforge-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: CivicForge API is unavailable
+          description: Prometheus has been unable to scrape the API for two minutes.
+      - alert: CivicForgeHighServerErrorRate
+        expr: sum(rate(civicforge_http_requests_total{status_class="5xx"}[5m])) / clamp_min(sum(rate(civicforge_http_requests_total[5m])), 0.001) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: CivicForge server error rate exceeds 5%
+          description: More than 5% of API requests have returned 5xx responses for ten minutes.
+      - alert: CivicForgeHighAverageLatency
+        expr: sum(rate(civicforge_http_request_duration_seconds_sum[5m])) / clamp_min(sum(rate(civicforge_http_request_duration_seconds_count[5m])), 0.001) > 1.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: CivicForge API latency is elevated
+          description: Average API request latency has exceeded 1.5 seconds for ten minutes.
+      - alert: CivicForgeHighMemoryUsage
+        expr: civicforge_process_resident_memory_bytes > 1073741824
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: CivicForge API memory use exceeds 1 GiB
+          description: Investigate memory growth or increase the container memory limit.
+      - alert: CivicForgeBackupFailed
+        expr: civicforge_backup_last_attempt_timestamp_seconds > 0 and civicforge_backup_last_result == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: CivicForge encrypted backup failed
+          description: The most recent off-host backup attempt did not succeed.
+      - alert: CivicForgeBackupStale
+        expr: time() - civicforge_backup_last_success_timestamp_seconds > 108000
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: CivicForge encrypted backup is stale
+          description: No successful off-host backup has completed in the last 30 hours.

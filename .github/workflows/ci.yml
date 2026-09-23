@@ -1,0 +1,49 @@
+name: CivicForge CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+            frontend/package-lock.json
+      - run: npm ci
+      - run: npm ci --prefix backend
+      - run: npm ci --prefix frontend
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Validate production Compose structure
+        shell: bash
+        env:
+          DOMAIN: civicforge.example.test
+          ALLOWED_ORIGINS: https://civicforge.example.test
+          RESTIC_REPOSITORY: s3:https://object-storage.example.test/civicforge
+          SECRETS_DIR: .secrets-ci
+        run: |
+          mkdir -p .secrets-ci
+          printf 'postgres://civicforge:ci-password@managed-postgres.example.test:5432/civicforge?sslmode=require\n' > .secrets-ci/database_url
+          printf 'postgres://civicforge:ci-password@managed-postgres.example.test:5432/civicforge_restore_drill?sslmode=require\n' > .secrets-ci/restore_database_url
+          printf 'ci-jwt-secret-000000000000000000000000000000000000000000000000\n' > .secrets-ci/jwt_secret
+          printf 'ci-signing-secret-000000000000000000000000000000000000000000000\n' > .secrets-ci/file_signing_secret
+          printf 'ci-metrics-token-0000000000000000000000000000000000000000000000\n' > .secrets-ci/metrics_token
+          printf 'ci-restic-secret-0000000000000000000000000000000000000000000000\n' > .secrets-ci/restic_password
+          printf 'https://alerts.example.test/civicforge\n' > .secrets-ci/alert_webhook_url
+          touch .secrets-ci/log_sink_url .secrets-ci/log_sink_token .secrets-ci/ai_api_key .secrets-ci/s3_access_key_id .secrets-ci/s3_secret_access_key
+          docker compose -f compose.production.yml config --quiet
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

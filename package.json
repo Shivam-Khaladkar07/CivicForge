@@ -1,0 +1,27 @@
+{
+  "name": "civicforge",
+  "private": true,
+  "version": "0.1.0",
+  "description": "CivicForge — Jharkhand (SIH 2026 prototype)",
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "seed": "npm run seed --prefix backend",
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "typecheck": "npm run typecheck --prefix backend && npm run typecheck --prefix frontend",
+    "test": "npm test --prefix backend",
+    "build": "npm run build --prefix backend && npm run build --prefix frontend",
+    "backup": "node scripts/backup.mjs",
+    "test:e2e": "playwright test",
+    "prod:prepare": "node scripts/prepare-production-secrets.mjs",
+    "prod:validate": "node scripts/validate-production-config.mjs",
+    "restore:drill:local": "npm run build --prefix backend && node backend/dist/tools/localRestoreDrill.js",
+    "security:audit": "npm audit --audit-level=high && npm audit --prefix backend --audit-level=high && npm audit --prefix frontend --audit-level=high"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "concurrently": "^9.1.2"
+  },
+  "dependencies": {
+    "postgres": "^3.4.9"
+  }
+}
