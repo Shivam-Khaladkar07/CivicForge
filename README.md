@@ -28,7 +28,7 @@ npm run dev
 - Web: `http://localhost:5173`
 - API health: `http://localhost:4000/api/health`
 
-Use the Supabase connection URL and the project's CA certificate for CivicForge runtime. See [Supabase database migration](docs/SUPABASE_DATABASE_MIGRATION.md) for schema, preserved local source data, transfer, and deployment connection setup.
+The Supabase schema and synthetic demo-data transfer are complete and verified (53 application tables, 568 records). The local backend is configured with the Supabase URL and CA certificate. Render still needs its own private session-pooler URL and CA-certificate secret files. See [Supabase database migration](docs/SUPABASE_DATABASE_MIGRATION.md) for details.
 
 ### Environment
 
@@ -37,8 +37,8 @@ Copy `backend/.env.example` to `backend/.env` and set:
 ```env
 PORT=4000
 JWT_SECRET=replace-in-production
-DATABASE_URL=postgres://user:password@host:5432/civicforge  # mandatory in production
-PGLITE_DATA_DIR=./data/pglite                              # optional local fallback
+DATABASE_URL=postgres://user:password@host:5432/postgres  # Supabase URL; mandatory at runtime
+DATABASE_CA_CERT_FILE=.secrets/supabase-ca.crt            # required for verified TLS
 PRIVATE_UPLOAD_DIR=./private-uploads
 FILE_SIGNING_SECRET=replace-with-an-independent-random-secret
 METRICS_TOKEN=replace-with-a-third-independent-random-secret
@@ -48,7 +48,8 @@ CLAMAV_PORT=3310
 REQUIRE_MALWARE_SCANNER=false   # set true in production
 DEMO_ENV=true
 SEED_ON_STARTUP=true
-REQUIRE_POSTGRES=false
+REQUIRE_POSTGRES=true
+REQUIRE_DATABASE_TLS=true
 AI_API_KEY=                           # optional
 AI_API_BASE_URL=https://api.openai.com/v1 # optional OpenAI-compatible endpoint
 AI_MODEL=gpt-4o-mini                  # optional
@@ -149,4 +150,4 @@ The selected demo hosting path is [Render backend + Vercel frontend](docs/RENDER
 
 For the database transfer and encrypted connection setup, follow [the Supabase database migration guide](docs/SUPABASE_DATABASE_MIGRATION.md). For production deployment, follow [the production runbook](docs/PRODUCTION_RUNBOOK.md). Demo AI results and data must remain visibly labelled. PGlite is reserved for explicitly isolated tests; production does not use it.
 
-External go-live gates remain: migrate and verify the local synthetic records into Supabase, provide the database CA certificate and private deployment credentials, configure the off-host Restic repository, DNS, and alert webhook, complete the production-format restore drill, and have an independent assessor complete and retest the penetration-test scope. Private uploads use a persistent Docker volume and encrypted off-host backup in the single-host deployment; horizontally scaled production should replace that adapter with encrypted object storage. Institution deletion is deliberately blocked when linked records exist.
+Supabase migration is complete: 53 application tables and 568 synthetic records were transferred and verified; local TLS connectivity was verified with the project's CA certificate. Remaining go-live gates are configuring Render's private session-pooler URL and CA-certificate files, setting the off-host Restic repository, real Vercel/Render origins and alert webhook, completing the production-format restore drill, and having an independent assessor complete and retest the penetration-test scope. Private uploads use a persistent disk and encrypted off-host backup in the single-host deployment; horizontally scaled production should replace that adapter with encrypted object storage. Institution deletion is deliberately blocked when linked records exist.

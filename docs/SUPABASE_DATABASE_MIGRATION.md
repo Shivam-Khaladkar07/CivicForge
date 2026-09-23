@@ -24,9 +24,11 @@ For hosted services, use the session-pooler URL from the Supabase **Connect** pa
 
 ## Source data and transfer
 
+**Migration status: complete and verified.** The recoverable PGlite snapshot was imported after TLS certificate setup. The transaction transferred 568 records across 53 CivicForge tables, preserving identifiers and password hashes. A follow-up database check confirmed the table counts, enabled RLS, removed direct Data API table grants, and checked key foreign-key relationships. A demo-account login through the Express API also succeeded against Supabase. The source snapshot remains preserved locally.
+
 A read-only preflight copy of the recoverable local PGlite database is preserved under the ignored `backups/supabase-preflight-1790153937248/pglite-recovery` directory. It contains 9 users, 15 challenges, 1 project, 152 audit entries, and the associated synthetic demo relationships. The older `pglite` folder did not open during the preflight and was preserved separately; the recoverable copy is the selected source.
 
-Once the CA file is present, from the repository root run:
+The following is the repeatable importer used for the completed transfer. It refuses non-empty targets and is not needed again for this already-populated Supabase project:
 
 ```powershell
 $env:DATABASE_CA_CERT_FILE = (Resolve-Path .secrets/supabase-ca.crt).Path

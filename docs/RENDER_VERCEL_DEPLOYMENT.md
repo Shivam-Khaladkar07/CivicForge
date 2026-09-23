@@ -4,7 +4,7 @@ This is the selected hosting path for the synthetic SIH demonstration. Keep `DEM
 
 ## Current status and protected deployment
 
-The local `backend/.env` already points to the CivicForge Supabase project. The application schema has been provisioned there; the recoverable synthetic data transfer awaits the Supabase CA certificate. `frontend/.env.local` contains Vercel-generated authentication material, not the backend address. Do not copy that file into Render or commit it.
+The local `backend/.env` already points to the CivicForge Supabase project, and the CA certificate is configured locally. The schema and synthetic source data have been transferred and verified: 53 application tables, 568 records. This does not configure Render automatically: its new API service still needs the exact Supabase session-pooler URL and CA certificate as private secret files. `frontend/.env.local` contains Vercel-generated authentication material, not the backend address. Do not copy that file into Render or commit it.
 
 The existing Render service `civicforge-backend` serves the protected **CodeCivic** repository. Its `/api/health` responds, but `/api/health/ready` returned 404 during inspection. Do not repoint it, change its environment, or use it as the new app's backend. This Blueprint uses new service names: `civicforge-api` and `civicforge-scanner`. Their actual URLs are assigned by Render; no URL in this guide is a claim that they already exist.
 
