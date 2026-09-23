@@ -1,21 +1,17 @@
-# Paid configuration: review docs/RENDER_VERCEL_DEPLOYMENT.md before applying.
-# This creates NEW services; do not import the protected CodeCivic repository.
+# CivicForge FREE DEMO deployment for Render.
+# This file intentionally creates ONLY a Free Web Service.
+# It is for synthetic/demo data, not real citizen records.
 services:
   - type: web
     name: civicforge-api
     runtime: docker
     region: singapore
-    plan: standard
-    dockerfilePath: ./ops/render/Dockerfile
-    dockerContext: .
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
     autoDeployTrigger: off
     healthCheckPath: /api/health/ready
-    disk:
-      name: civicforge-private-data
-      mountPath: /data
-      sizeGB: 5
     envVars:
-      # Create this group with secret files BEFORE applying the Blueprint.
       - fromGroup: civicforge-render-secrets
       - key: NODE_ENV
         value: production
@@ -30,7 +26,9 @@ services:
       - key: REQUIRE_DATABASE_TLS
         value: "true"
       - key: REQUIRE_MALWARE_SCANNER
-        value: "true"
+        value: "false"
+      - key: MALWARE_SCAN_MODE
+        value: basic
       - key: DATABASE_URL_FILE
         value: /etc/secrets/database_url
       - key: DATABASE_CA_CERT_FILE
@@ -45,8 +43,6 @@ services:
         generateValue: true
       - key: METRICS_TOKEN
         generateValue: true
-      - key: INTERNAL_METRICS_PORT
-        value: "9090"
       - key: ALLOWED_ORIGINS
         sync: false
       - key: TRUST_PROXY_HOPS
@@ -54,38 +50,8 @@ services:
       - key: DB_POOL_MAX
         value: "5"
       - key: PRIVATE_UPLOAD_DIR
-        value: /data/uploads
-      - key: CLAMAV_HOST
-        fromService:
-          type: pserv
-          name: civicforge-scanner
-          property: host
-      - key: CLAMAV_PORT
-        value: "3310"
+        value: /tmp/civicforge-uploads
       - key: SECRETS_DIR
         value: /etc/secrets
-      - key: RESTIC_REPOSITORY
-        sync: false
-      - key: RESTIC_CACHE_DIR
-        value: /data/restic-cache
-      - key: BACKUP_STATE_DIR
-        value: /data/backup-state
-      - key: RESTORE_WORK_DIR
-        value: /tmp/civicforge-restore
-      - key: BACKUP_HOST_NAME
-        value: civicforge-render-demo
-      - key: BACKUP_INTERVAL_SECONDS
-        value: "86400"
-
-  - type: pserv
-    name: civicforge-scanner
-    runtime: image
-    image:
-      url: docker.io/clamav/clamav-debian:1.5.4
-    region: singapore
-    plan: pro
-    autoDeployTrigger: off
-    disk:
-      name: civicforge-scanner-definitions
-      mountPath: /var/lib/clamav
-      sizeGB: 2
+      # No Render private service, persistent disk, Caddy, Prometheus,
+      # Alertmanager, Restic worker, or paid-only resource is declared here.
